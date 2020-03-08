@@ -18,4 +18,6 @@
 # vendor/
 go.sum
 main
+worker
+enqueue
 function.zip

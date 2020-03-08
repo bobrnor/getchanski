@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"log"
+	"os/exec"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -56,8 +58,34 @@ func loop() error {
 				continue
 			}
 
-			// TODO: process url
+			// --no-mark-watched --no-color --no-playlist --retries 10
+			// --output ~/youtube-dl/audio/%(title)s-%(id)s.%(ext)s --restrict-filenames --no-cache-dir --no-progress
+			// --extract-audio --audio-format mp3
 			log.Println("Proceccing URL:", decodedBody.URL)
+			cmd := exec.Command("youtube-dl",
+				"--no-mark-watched",
+				"--no-color",
+				"-no-playlist",
+				"--retries", "10",
+				"--output", "%(title)s-%(id)s.%(ext)s",
+				"--restrict-filenames",
+				"--no-cache-dir",
+				"--no-progress",
+				"--extract-audio",
+				"--audio-format", "mp3",
+				decodedBody.URL,
+			)
+
+			var out bytes.Buffer
+			cmd.Stdout = &out
+			cmd.Stderr = &out
+
+			if err := cmd.Run(); err != nil {
+				log.Println("Can't execute command with youtube-dl:", cmd.String(), ",", out.String(), ",", err.Error())
+				continue
+			}
+
+			log.Println("youtube-dl:", out.String())
 
 			result, err := sqsClient.DeleteMessage(&sqs.DeleteMessageInput{
 				QueueUrl:      aws.String(config.SQSURL),

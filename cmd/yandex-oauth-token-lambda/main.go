@@ -44,8 +44,8 @@ type YDError struct {
 }
 
 type YDDiskGetResponse struct {
-	User  YDUserInfo `json:"user"`
-	Error YDError    `json:"error"`
+	YDError
+	User YDUserInfo `json:"user"`
 }
 
 type UserItem struct {
@@ -78,11 +78,11 @@ func getUserInfo(token string) (YDUserInfo, error) {
 
 	var decodedBody YDDiskGetResponse
 	if err := json.Unmarshal(body, &decodedBody); err != nil {
-		return YDUserInfo{}, err
+		return YDUserInfo{}, fmt.Errorf("can't unmarshal %s: %w", body, err)
 	}
 
-	if len(decodedBody.Error.Error) > 0 {
-		return YDUserInfo{}, fmt.Errorf("%s: %s (%s)", decodedBody.Error.Error, decodedBody.Error.Message, decodedBody.Error.Description)
+	if len(decodedBody.Error) > 0 {
+		return YDUserInfo{}, fmt.Errorf("%s: %s (%s)", decodedBody.Error, decodedBody.Message, decodedBody.Description)
 	}
 
 	return decodedBody.User, nil
@@ -156,7 +156,7 @@ func HandleRequest(ctx context.Context, event Request) (Response, error) {
 	return Response{
 		Status: "OK",
 		UUID:   userItem.UUID,
-		Cookie: fmt.Sprintf("UUID=%s; domain=getchanski-site.s3-website-us-east-1.amazonaws.com; expires=%s", userItem.UUID, userItem.ExpiresAt.Format(http.TimeFormat)),
+		Cookie: fmt.Sprintf("uuid=%s; domain=getchanski-site.s3-website-us-east-1.amazonaws.com; expires=%s; HttpOnly;", userItem.UUID, userItem.ExpiresAt.Format(http.TimeFormat)),
 	}, nil
 }
 

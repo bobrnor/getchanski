@@ -20,4 +20,6 @@ go.sum
 main
 worker
 enqueue
+yandex-oauth-token
+yandex-oauth-url
 function.zip
